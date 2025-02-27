@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="tsubaki.database.mapper.NodeSetMapper">
+    <select id="selectAll" resultType="NodeSet">
+        select * from NodeSet
+    </select>
+    <select id="selectByID" resultType="NodeSet">
+        select * from NodeSet where author_id = #{id}
+    </select>
+    <select id="selectByName" resultType="NodeSet">
+        select * from NodeSet where name like #{name}
+    </select>
+    <select id="selectByAuthorID" resultType="NodeSet">
+        select * from NodeSet where author_id like #{id}
+    </select>
+</mapper>

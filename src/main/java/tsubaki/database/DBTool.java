@@ -1,5 +1,4 @@
-package tsubaki.databse;
-
+package tsubaki.database;
 import java.time.LocalDateTime;
 import java.util.Map;
 
@@ -11,9 +10,9 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
-@Component("DBtest")
+@Component("DBTool")
 
-public class DBtest {
+public class DBTool {
 
     @Autowired
     JdbcTemplate jdbcTemplate;
@@ -38,7 +37,15 @@ public class DBtest {
 
         // 3、检索一条数据
         Map<String, Object> user = this.jdbcTemplate.queryForObject("SELECT * FROM `user` WHERE `id` = ?", new ColumnMapRowMapper(), 1L);
-        //TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+        TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
         System.out.println(("检索数据：{}"+ user));
+    }
+
+
+
+    //向指定的表格中插入数据
+    public boolean insert_data(String table_name){
+
+        return true;
     }
 }

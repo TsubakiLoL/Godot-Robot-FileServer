@@ -5,7 +5,6 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.system.ApplicationHome;
 import org.springframework.context.ApplicationContext;
-import tsubaki.databse.DBtest;
 
 import java.io.File;
 

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="tsubaki.database.mapper.AuthorMapper">
+    <select id="selectAll" resultType="tsubaki.database.entity.Author">
+        select * from Author;
+    </select>
+    <select id="selectByID" resultType="tsubaki.database.entity.Author">
+        select * from Author where author_id = #{id}
+    </select>
+    <select id="selectByName" resultType="tsubaki.database.entity.Author">
+        select * from Author where name like #{name}
+    </select>
+    <select id="isAuthorPass" resultType="tsubaki.database.entity.Author">
+        select * from Author where author_id =#{author_id} and password = #{password}
+    </select>
+</mapper>
