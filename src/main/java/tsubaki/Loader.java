@@ -16,11 +16,11 @@ public class Loader {
     public static void main(String[] args) {
         appContext=SpringApplication.run(Loader.class,args);
         System.out.println(getJarFilePath());
-        try {
-            ((DBtest)appContext.getBean("DBtest")).test();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+//        try {
+//            ((DBtest)appContext.getBean("DBtest")).test();
+//        } catch (Exception e) {
+//            throw new RuntimeException(e);
+//        }
     }
 
     public static ApplicationContext getContext(){

@@ -2,11 +2,11 @@ spring:
   datasource:
     type: com.zaxxer.hikari.HikariDataSource
     driver-class-name: org.sqlite.JDBC
-    url: "jdbc:sqlite:D:\\SQLiteStudio\\Database\\SpringFileServer"
+    url: "jdbc:sqlite:src/main/resources/data.db"
 
-#D:/SQLiteStudio/Database/SpringFileServer
+#D:/SQLiteStudio/Database/data.db
 
 FileSystem:
   chatNodeSavePath: "D:\\SQLiteStudio\\Database\\"
-
-
+#Http:
+  #download_path: "D:\\"
