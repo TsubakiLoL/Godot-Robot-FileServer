@@ -16,4 +16,21 @@
     <select id="selectByAuthorID" resultType="NodeSet">
         select * from NodeSet where author_id like #{id}
     </select>
+    <insert id="addNodeSet">
+        insert into NodeSet (set_id,author_id,introduction,name,path) VALUES(
+        #{set_id},
+        #{author_id},
+        #{introduction},
+        #{name},
+        #{path}
+        )
+    </insert>
+    <delete id="deleteNodeSetBySetID">
+        delete NodeSet
+        where set_id=#{set_id}
+    </delete>
+    <delete id="deleteNodeSetByAuthorID">
+        delete NodeSet
+        where author_id =#{author_id}
+    </delete>
 </mapper>

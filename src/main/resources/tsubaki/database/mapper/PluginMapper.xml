@@ -8,8 +8,16 @@
         select * from Plugin;
     </select>
     <select id="selectByAuthorID" resultType="tsubaki.database.entity.Plugin">
-
+        select * from Plugin
+        where author_id = #{author_id}
     </select>
-    <select id="selectByID" resultType="tsubaki.database.entity.Plugin"></select>
-    <select id="selectByName" resultType="tsubaki.database.entity.Plugin"></select>
+    <select id="selectByID" resultType="tsubaki.database.entity.Plugin">
+        select * from Plugin
+        where plugin_id = #{plugin_id}
+    </select>
+    <select id="selectByName" resultType="tsubaki.database.entity.Plugin">
+        select *from Plugin
+        where name like #{name}
+    </select>
+
 </mapper>

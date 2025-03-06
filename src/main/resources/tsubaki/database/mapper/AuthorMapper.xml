@@ -15,4 +15,17 @@
     <select id="isAuthorPass" resultType="tsubaki.database.entity.Author">
         select * from Author where author_id =#{author_id} and password = #{password}
     </select>
+    <insert id="addAuthor" >
+        insert into Author (author_id,name,password) VALUES(
+            #{author_id},
+            #{name},
+            #{password}
+        )
+    </insert>
+    <update id="updatePassword">
+        update Author
+        set password=#{password}
+        where author_id=#{author_id}
+    </update>
+
 </mapper>

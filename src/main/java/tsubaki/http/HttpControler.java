@@ -7,12 +7,17 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -35,8 +40,10 @@ public class HttpControler {
         //建立输入流
         InputStreamResource resource ;
         try {
-            resource = new InputStreamResource(Files.newInputStream(filePath));
-        } catch (IOException e) {
+            FileInputStream fileInputStream = new FileInputStream(file);
+            resource = new InputStreamResource(new LockedFileInputStream(fileInputStream));
+        } catch (Exception e) {
+
             //当文件不存在时返回404，并进行标准输出
             System.out.printf("Error:文件[%s]不存在\n",file.getPath());
             return ResponseEntity.status(404).build();
@@ -69,13 +76,20 @@ public class HttpControler {
                 .body(resource);
     }
 
-    //上传文件
     @PostMapping("/upload")
-    public String save(@RequestParam Map<String, Object> map){
-
-        System.out.println("书名：" + map.get("name") + ", 作者: " + map.get("author"));
-
-        return "书名：" + map.get("name") + ", 作者: " + map.get("author");
+    public ResponseEntity<?> handleUpload(MultipartHttpServletRequest request) {
+        // 获取普通参数
+        Map<String, String> formData = new HashMap<>();
+        System.out.println( request.getParameterMap().toString());
+        System.out.println(request.getParameterMap().isEmpty());
+        System.out.println(request.getParameterMap().size());
+        request.getParameterMap().forEach((key, values) -> {
+            formData.put(key, values.length > 0 ? values[0] : null);
+        });
+        // 获取文件
+        Map<String, MultipartFile> files = request.getFileMap();
+        System.out.println(files);
+        return ResponseEntity.ok(Map.of("formData", formData, "files", files.keySet()));
     }
 
 
