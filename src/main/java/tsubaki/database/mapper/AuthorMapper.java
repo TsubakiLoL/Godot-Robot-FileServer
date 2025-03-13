@@ -16,4 +16,9 @@ public interface AuthorMapper {
 
     //判定作者密码是否通过
     Author isAuthorPass(String author_id,String password);
+
+    void addAuthor(String author_id,String name,String password);
+
+
+
 }

@@ -1,6 +1,7 @@
 package tsubaki.http;
 
 
+import org.apache.ibatis.session.SqlSession;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
@@ -9,6 +10,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
+import tsubaki.database.entity.Author;
+import tsubaki.database.mapper.AuthorMapper;
+import tsubaki.database.mybatis.GetSqlsession;
+import tsubaki.util.MD5Util;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -19,6 +24,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/files")
@@ -91,6 +97,136 @@ public class HttpControler {
         System.out.println(files);
         return ResponseEntity.ok(Map.of("formData", formData, "files", files.keySet()));
     }
+
+
+    //登录查询
+    @PostMapping("/login")
+    public ResponseEntity<?> handleLogin(MultipartHttpServletRequest request) {
+        try {
+            // 获取普通参数
+            Map<String, String> formData = new HashMap<>();
+            request.getParameterMap().forEach((key, values) -> {
+                formData.put(key, values.length > 0 ? values[0] : null);
+            });
+
+            if (!formData.containsKey("id") || !formData.containsKey("password")) {
+                System.out.println("请求参数不全");
+                return ResponseEntity.ok("Fail");
+            }
+            String id = formData.get("id");
+            String password = formData.get("password");
+
+
+            SqlSession sqlSession = GetSqlsession.getsqlsession();
+            AuthorMapper authorMapper = sqlSession.getMapper(AuthorMapper.class);
+            Author author = authorMapper.selectByID(id);
+            sqlSession.close();
+            if (author == null) {
+                System.out.println("未找到用户");
+
+                return ResponseEntity.ok("Fail");
+
+            }
+            String MD5 = MD5Util.generateMD5(author.getPassword());
+
+            if (!(MD5.equals( password))) {
+                System.out.println("密码不正确:"+MD5+","+password);
+                return ResponseEntity.ok("Fail");
+            }
+            return ResponseEntity.ok("OK");
+        } catch (Exception e) {
+            System.out.println("抛出错误"+e.toString());
+            return ResponseEntity.ok("Fail");
+
+        }
+    }
+
+
+
+
+    //注册
+    @PostMapping("/signup")
+    public ResponseEntity<?> handleSignup(MultipartHttpServletRequest request) {
+        try {
+            // 获取普通参数
+            Map<String, String> formData = new HashMap<>();
+            request.getParameterMap().forEach((key, values) -> {
+                formData.put(key, values.length > 0 ? values[0] : null);
+            });
+
+            if (!formData.containsKey("name") || !formData.containsKey("password")) {
+                System.out.println("请求参数不全");
+                return ResponseEntity.ok("Fail");
+            }
+            String name = formData.get("name");
+            String password = formData.get("password");
+
+
+           String author_id=signUpAuthor(name,password);
+           return ResponseEntity.ok(Map.of("id",author_id,"name",name,"password",password));
+        } catch (Exception e) {
+            System.out.println("抛出错误"+e.toString());
+            return ResponseEntity.ok("Fail");
+
+        }
+    }
+
+
+
+
+    //注册用户返回ID
+    String signUpAuthor(String name,String password){
+        SqlSession sqlSession = GetSqlsession.getsqlsession();
+        AuthorMapper authorMapper = sqlSession.getMapper(AuthorMapper.class);
+        UUID uuid = UUID.randomUUID();
+        int max_search_times=100000;
+        int times=0;
+        while(authorMapper.selectByID(uuid.toString())==null && times<=max_search_times) {
+            uuid=UUID.randomUUID();
+            times+=1;
+        }
+        if(times==max_search_times){
+            sqlSession.close();
+            throw new RuntimeException("create_author_fail");
+
+        }
+        authorMapper.addAuthor(uuid.toString(),name,password);
+        System.out.println(authorMapper.selectAll().toString());
+        sqlSession.commit();
+        sqlSession.close();
+
+        return uuid.toString();
+
+    }
+
+
+
+    @PostMapping("/updateAuthor")
+    public ResponseEntity<?> handleUpdateAuthor(MultipartHttpServletRequest request) {
+        try {
+            // 获取普通参数
+            Map<String, String> formData = new HashMap<>();
+            request.getParameterMap().forEach((key, values) -> {
+                formData.put(key, values.length > 0 ? values[0] : null);
+            });
+
+            if(formData.containsKey("name") && formData.containsKey("password")){
+
+
+            }
+            String name = formData.get("name");
+            String password = formData.get("password");
+
+
+            String author_id=signUpAuthor(name,password);
+            return ResponseEntity.ok(Map.of("id",author_id,"name",name,"password",password));
+        } catch (Exception e) {
+            System.out.println("抛出错误"+e.toString());
+            return ResponseEntity.ok("Fail");
+
+        }
+    }
+
 
 
 }

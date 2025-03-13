@@ -17,7 +17,7 @@ public class GetSqlsession {
 
         {
             try {
-                inputStream = Resources.getResourceAsStream("mybatisconfig.xml");
+                inputStream = Resources.getResourceAsStream("mybatis-config.xml");
             } catch (IOException e) {
                 e.printStackTrace();
             }
