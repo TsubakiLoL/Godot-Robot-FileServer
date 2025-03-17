@@ -4,6 +4,16 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="tsubaki.database.mapper.PluginMapper">
 
+    <insert id="insertPlugin">
+        insert into Plugin (plugin_id,name,author_id,introduction) VALUES(
+            #{plugin_id},
+            #{name},
+            #{author_id},
+            #{introduction}
+        )
+
+    </insert>
+
     <select id="selectAll" resultType="tsubaki.database.entity.Plugin">
         select * from Plugin;
     </select>

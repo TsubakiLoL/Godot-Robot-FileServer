@@ -14,4 +14,8 @@ public interface PluginMapper {
     Plugin selectByID(String plugin_id);
 
     List<Plugin> selectByName(String name);
+
+
+
+    void insertPlugin(String plugin_id,String name,String author_id,String introduction);
 }

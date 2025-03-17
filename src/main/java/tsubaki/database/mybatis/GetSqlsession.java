@@ -30,7 +30,7 @@ public class GetSqlsession {
 
     //这个方法获得SqlSession对象
     public static SqlSession getsqlsession(){
-        return createfactory().openSession();
+        return createfactory().openSession(true);
     }
 
 

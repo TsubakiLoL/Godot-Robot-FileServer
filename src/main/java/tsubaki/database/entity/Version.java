@@ -6,7 +6,7 @@ public class Version {
 
     private String path;
 
-    private String introduction;
+
 
     public String getPlugin_id() {
         return plugin_id;
@@ -32,13 +32,6 @@ public class Version {
         this.path = path;
     }
 
-    public String getIntroduction() {
-        return introduction;
-    }
-
-    public void setIntroduction(String introduction) {
-        this.introduction = introduction;
-    }
 
     @Override
     public String toString() {
@@ -46,7 +39,6 @@ public class Version {
                 "plugin_id='" + plugin_id + '\'' +
                 ", version_id='" + version_id + '\'' +
                 ", path='" + path + '\'' +
-                ", introduction='" + introduction + '\'' +
                 '}';
     }
 }

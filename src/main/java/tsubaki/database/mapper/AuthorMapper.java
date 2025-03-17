@@ -20,5 +20,8 @@ public interface AuthorMapper {
     void addAuthor(String author_id,String name,String password);
 
 
+    void updateAuthorPassword(String author_id,String new_password);
+
+    void updateAuthorName(String author_id,String new_name);
 
 }

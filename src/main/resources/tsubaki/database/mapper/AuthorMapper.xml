@@ -22,10 +22,18 @@
             #{password}
         )
     </insert>
-    <update id="updatePassword">
+    <!--更新用户密码-->
+    <update id="updateAuthorPassword">
         update Author
-        set password=#{password}
+        set password=#{new_password}
         where author_id=#{author_id}
+    </update>
+    <!--更新用户名字-->
+    <update id="updateAuthorName">
+        update Author
+        set name=#{new_name}
+        where author_id=#{author_id}
+
     </update>
 
 </mapper>
