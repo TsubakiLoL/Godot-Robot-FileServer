@@ -12,3 +12,7 @@ FileSystem:
   chatNodeSavePath: "D:\\SQLiteStudio\\Database\\"
 #Http:
   #download_path: "D:\\"
+
+Http:
+  download_path:  "D:\\file_server_test"
+  server_address: "http://localhost:8080"

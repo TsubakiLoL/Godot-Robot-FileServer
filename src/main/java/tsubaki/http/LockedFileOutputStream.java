@@ -24,6 +24,8 @@ public class LockedFileOutputStream extends FilterOutputStream {
         try {
             fos.close();
         } finally {
+            System.out.println(lock);
+
             if (lock != null && lock.isValid()) {
                 lock.release();
                 System.out.println("锁释放");

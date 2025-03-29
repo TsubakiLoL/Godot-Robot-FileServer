@@ -2,8 +2,10 @@ package tsubaki.http;
 
 
 
+import com.google.gson.Gson;
 import org.apache.ibatis.session.SqlSession;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.configurationprocessor.json.JSONObject;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +26,7 @@ import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -35,6 +38,9 @@ public class PluginHttpControler {
     @Value("${Http.download_path:D:\\}")
     private String path;
 
+
+    @Value("${Http.server_address:http://localhost:8080}")
+    private String server_address;
     //创建新的插件
     @PostMapping("/createPlugin")
     public ResponseEntity<?> handleCreatePlugin(MultipartHttpServletRequest request) {
@@ -101,20 +107,26 @@ public class PluginHttpControler {
             //如果没有指明用户ID和密码，则返回失败
             if(!(formData.containsKey("author_id")&& formData.containsKey("password"))){
                 sqlSession.close();
+                System.out.println("参数缺少");
+                System.out.println(formData.toString());
                 return ResponseEntity.ok().body("Fail");
             }
-            if(!(formData.containsKey("plugin_id")) || formData.containsKey("version") || files.size()!=1){
+            if((!formData.containsKey("plugin_id")) || (!formData.containsKey("version") ) ||  (!formData.containsKey("package_name")) || files.size()!=1){
                 sqlSession.close();
+                System.out.println(formData.toString());
                 return ResponseEntity.ok().body("Fail");
             }
             String author_id=formData.get("author_id");
             String password=formData.get("password");
             String plugin_id=formData.get("plugin_id");
             String plugin_version=formData.get("version");
+            //获取包名
+            String package_name=formData.get("package_name");
             AuthorMapper authorMapper = sqlSession.getMapper(AuthorMapper.class);
             //如果密码验证不通过
             if(! Author.isAuthorPass(author_id,password,authorMapper)){
                 sqlSession.close();
+                System.out.println("密码验证不通过");
                 return ResponseEntity.ok().body("Fail");
             }
             VersionMapper versionMapper=sqlSession.getMapper(VersionMapper.class);
@@ -123,8 +135,11 @@ public class PluginHttpControler {
             PluginMapper pluginMapper=sqlSession.getMapper(PluginMapper.class);
             Plugin plugin=pluginMapper.selectByID(plugin_id);
             //如果不存在plugin或者plugin不属于该作者，返回失败
-            if(plugin==null || plugin.getAuthor_id()!=author_id){
+            if(plugin==null || !plugin.getAuthor_id().equals(author_id)){
                 sqlSession.close();
+                System.out.println("不属于该作者");
+                System.out.println(plugin.getAuthor_id());
+                System.out.println(author_id);
                 return ResponseEntity.ok().body("Fail");
             }
             //强转类型
@@ -141,17 +156,13 @@ public class PluginHttpControler {
                 LockedFileOutputStream lockedFileOutputStream= new LockedFileOutputStream(fileOutputStream);
                 FileUtil.writeInputStreamtoOutputStream(fileInputStream,lockedFileOutputStream);
                 result_map.put("path",version.getPath());
-
             }
             //不存在则创建，并写入数据库
             else{
                 String write_path=writeFile(fileInputStream,".zip");
-                versionMapper.insertVersion(plugin_id,plugin_version,write_path);
+                versionMapper.insertVersion(plugin_id,plugin_version,write_path,package_name);
                 result_map.put("path",write_path);
             }
-
-
-
             result_map.put("author_id",author_id);
             result_map.put("plugin_id",plugin_id);
             result_map.put("version",plugin_version);
@@ -160,7 +171,7 @@ public class PluginHttpControler {
             sqlSession.close();
             return ResponseEntity.ok(result_map);
         } catch (Exception e) {
-            System.out.println("抛出错误"+e.toString());
+            e.printStackTrace();
             sqlSession.close();
             return ResponseEntity.ok("Fail");
 
@@ -204,4 +215,353 @@ public class PluginHttpControler {
         FileUtil.writeInputStreamtoOutputStream(inputStream,lockedFileOutputStream);
         return uuid.toString().replace("-","")+back;
     }
+
+
+
+    //通过作者ID获取插件全部信息
+    //如果查找到返回的应该是如下结构
+    //{
+    //  "id":author_id,
+    //  "name":author_name,
+    //  "plugin":[
+    //      {
+    //          "plugin_id":plugin_id,
+    //          "plugin_name":plugin_name,
+    //          "version":{
+    //              version:下载地址
+    //          }
+    //      }
+    //      ...
+    //
+    //   ]
+    //
+    //}
+    @PostMapping("/getAuthorPlugin")
+    public ResponseEntity<?> handleGetAuthorPlugin(MultipartHttpServletRequest request) throws Exception {
+        SqlSession sqlSession = GetSqlsession.getsqlsession();
+        try {
+            // 获取普通参数
+            Map<String, String> formData = new HashMap<>();
+            request.getParameterMap().forEach((key, values) -> {
+                formData.put(key, values.length > 0 ? values[0] : null);
+            });
+            if(!formData.containsKey("id")){
+                sqlSession.close();
+                return ResponseEntity.ok("Fail");
+            }
+            String author_id=formData.get("id");
+            AuthorMapper authorMapper=sqlSession.getMapper(AuthorMapper.class);
+            Author author=authorMapper.selectByID(author_id);
+            if(author==null){
+                sqlSession.close();
+                return ResponseEntity.ok("Fail");
+            }
+            //结果字典
+            Map<String,Object> result_map=new HashMap<String,Object>();
+            result_map.put("id",author.getAuthor_id());
+            result_map.put("name",author.getName());
+            PluginMapper pluginMapper=sqlSession.getMapper(PluginMapper.class);
+            VersionMapper versionMapper=sqlSession.getMapper(VersionMapper.class);
+            //检索插件
+            List<Plugin> pluginList=pluginMapper.selectByAuthorID(author_id);
+            Map[] cache_array=new Map[pluginList.size()];
+            for(int i=0;i<pluginList.size();i++){
+                Map cache=new HashMap<>();
+                Plugin p= pluginList.get(i);
+                cache.put("plugin_id",p.getPlugin_id());
+                cache.put("plugin_name",p.getName());
+                cache.put("introduction",p.getIntroduction());
+                cache.put("author_id",p.getAuthor_id());
+                List<Version> versionList=versionMapper.selectByPluginID(p.getPlugin_id());
+                Map version_cache=new HashMap();
+                //写入id和路径
+                for(int j=0;j<versionList.size();j++){
+                    Version version=versionList.get(j);
+                    Map new_map=new HashMap();
+                    new_map.put("path",version.getPath());
+                    new_map.put("package_name",version.getPackage_name());
+                    version_cache.put(version.getVersion(),new_map);
+
+                }
+                cache.put("version",version_cache);
+                cache_array[i]=cache;
+            }
+            result_map.put("plugin",cache_array);
+            Gson gson=new Gson();
+            System.out.println(gson.toJson(result_map));
+            return  ResponseEntity.ok(gson.toJson(result_map));
+        } catch (Exception e) {
+            sqlSession.close();
+            return ResponseEntity.ok("Fail");
+
+        }
+    }
+
+
+    //通过名字模糊搜索插件
+    @PostMapping("/getPlugin")
+    public ResponseEntity<?> handleGetPlugin(MultipartHttpServletRequest request) throws Exception {
+        SqlSession sqlSession = GetSqlsession.getsqlsession();
+        try {
+            // 获取普通参数
+            Map<String, String> formData = new HashMap<>();
+            request.getParameterMap().forEach((key, values) -> {
+                formData.put(key, values.length > 0 ? values[0] : null);
+            });
+            if(!formData.containsKey("content")){
+                sqlSession.close();
+                return ResponseEntity.ok("Fail");
+            }
+            //提取搜索参数
+            String content=formData.get("content");
+            PluginMapper pluginMapper=sqlSession.getMapper(PluginMapper.class);
+
+            //结果字典
+            Map<String,Object> result_map=new HashMap<String,Object>();
+            result_map.put("content",content);
+            //检索插件
+            List<Plugin> pluginList=pluginMapper.selectByName("%"+content+"%");
+
+            AuthorMapper authorMapper=sqlSession.getMapper(AuthorMapper.class);
+
+
+            Map[] cache_array=new Map[pluginList.size()];
+            for(int i=0;i<pluginList.size();i++){
+                Map cache=new HashMap<>();
+                Plugin p= pluginList.get(i);
+                cache.put("plugin_id",p.getPlugin_id());
+                cache.put("plugin_name",p.getName());
+                Author author=authorMapper.selectByID(p.getAuthor_id());
+                cache.put("author_id",author.getAuthor_id());
+                cache.put("plugin_author",author.getName());
+                cache_array[i]=cache;
+            }
+            result_map.put("plugin",cache_array);
+            Gson gson=new Gson();
+            System.out.println(gson.toJson(result_map));
+            return  ResponseEntity.ok(gson.toJson(result_map));
+        } catch (Exception e) {
+            e.printStackTrace();
+            sqlSession.close();
+            return ResponseEntity.ok("Fail");
+
+        }
+    }
+
+
+    //获取某个插件的详细信息（包括插件名，版本等全部信息）
+    @PostMapping("/getPluginMes")
+    public ResponseEntity<?> handleGetPluginMes(MultipartHttpServletRequest request) throws Exception {
+        SqlSession sqlSession = GetSqlsession.getsqlsession();
+        try {
+            // 获取普通参数
+            Map<String, String> formData = new HashMap<>();
+            request.getParameterMap().forEach((key, values) -> {
+                formData.put(key, values.length > 0 ? values[0] : null);
+            });
+            if(!formData.containsKey("plugin_id")){
+                sqlSession.close();
+                return ResponseEntity.ok("Fail");
+            }
+            //提取搜索参数
+            String plugin_id=formData.get("plugin_id");
+            PluginMapper pluginMapper=sqlSession.getMapper(PluginMapper.class);
+
+            //结果字典
+            Map<String,Object> result_map=new HashMap<String,Object>();
+            result_map.put("plugin_id",plugin_id);
+            //检索插件
+            Plugin plugin=pluginMapper.selectByID(plugin_id);
+            if(plugin==null){
+                sqlSession.close();
+                return ResponseEntity.ok("Fail");
+            }
+            result_map.put("plugin_name",plugin.getName());
+            result_map.put("author_id",plugin.getAuthor_id());
+            result_map.put("introduction",plugin.getIntroduction());
+            AuthorMapper authorMapper=sqlSession.getMapper(AuthorMapper.class);
+            Author author=authorMapper.selectByID(plugin.getAuthor_id());
+            result_map.put("plugin_author",author.getName());
+            VersionMapper versionMapper=sqlSession.getMapper(VersionMapper.class);
+            List<Version> versionList=versionMapper.selectByPluginID(plugin.getPlugin_id());
+            Map version_cache=new HashMap();
+            //写入id和路径
+            for(int j=0;j<versionList.size();j++){
+                Version version=versionList.get(j);
+                Map new_map=new HashMap();
+                new_map.put("path",server_address+"/files/download/"+version.getPath());
+                new_map.put("package_name",version.getPackage_name());
+                version_cache.put(version.getVersion(),new_map);
+            }
+            result_map.put("version",version_cache);
+            Gson gson=new Gson();
+            System.out.println(gson.toJson(result_map));
+            return  ResponseEntity.ok(gson.toJson(result_map));
+        } catch (Exception e) {
+            e.printStackTrace();
+            sqlSession.close();
+            return ResponseEntity.ok("Fail");
+
+        }
+    }
+
+
+
+    //删除某插件的指定版本
+    @PostMapping("/deleteVersion")
+    public ResponseEntity<?> handleDeleteVersion(MultipartHttpServletRequest request) {
+        SqlSession sqlSession = GetSqlsession.getsqlsession();
+        try {
+            // 获取普通参数
+            Map<String, String> formData = new HashMap<>();
+            request.getParameterMap().forEach((key, values) -> {
+                formData.put(key, values.length > 0 ? values[0] : null);
+            });
+            //如果没有指明用户ID和密码，则返回失败
+            if(!(formData.containsKey("author_id")&& formData.containsKey("password"))){
+                sqlSession.close();
+                System.out.println("参数缺少");
+                System.out.println(formData.toString());
+                return ResponseEntity.ok().body("Fail");
+            }
+            if((!formData.containsKey("plugin_id")) || (!formData.containsKey("version") ) ){
+                sqlSession.close();
+                System.out.println(formData.toString());
+                return ResponseEntity.ok().body("Fail");
+            }
+            String author_id=formData.get("author_id");
+            String password=formData.get("password");
+            String plugin_id=formData.get("plugin_id");
+            String plugin_version=formData.get("version");
+            //获取包名
+            String package_name=formData.get("package_name");
+            AuthorMapper authorMapper = sqlSession.getMapper(AuthorMapper.class);
+            //如果密码验证不通过
+            if(! Author.isAuthorPass(author_id,password,authorMapper)){
+                sqlSession.close();
+                System.out.println("密码验证不通过");
+                return ResponseEntity.ok().body("Fail");
+            }
+            VersionMapper versionMapper=sqlSession.getMapper(VersionMapper.class);
+            Version version=versionMapper.selectByIDAndVersion(plugin_id,plugin_version);
+
+            PluginMapper pluginMapper=sqlSession.getMapper(PluginMapper.class);
+            Plugin plugin=pluginMapper.selectByID(plugin_id);
+            //如果不存在plugin或者plugin不属于该作者，返回失败
+            if(plugin==null || !plugin.getAuthor_id().equals(author_id)){
+                sqlSession.close();
+                System.out.println("不属于该作者");
+                System.out.println(plugin.getAuthor_id());
+                System.out.println(author_id);
+                return ResponseEntity.ok().body("Fail");
+            }
+
+
+            //结果数组
+            Map<String,String> result_map=new HashMap<String,String>();
+            //如果version存在，则替换,不对数据库进行更改
+            if(version!=null){
+                String path=this.path+"\\"+version.getPath();
+                FileUtil.delete(path);
+               versionMapper.deleteVersion(plugin_id,plugin_version);
+            }
+            //不存在
+            else{
+                sqlSession.close();
+                return ResponseEntity.ok("Fail");
+            }
+            result_map.put("author_id",author_id);
+            result_map.put("plugin_id",plugin_id);
+            result_map.put("version",plugin_version);
+
+            sqlSession.close();
+            return ResponseEntity.ok(result_map);
+        } catch (Exception e) {
+            e.printStackTrace();
+            sqlSession.close();
+            return ResponseEntity.ok("Fail");
+
+        }
+    }
+
+    //更新插件信息
+
+    @PostMapping("/updatePlugin")
+    public ResponseEntity<?> handleUpdatePlugin(MultipartHttpServletRequest request) {
+        SqlSession sqlSession = GetSqlsession.getsqlsession();
+        try {
+            // 获取普通参数
+            Map<String, String> formData = new HashMap<>();
+            request.getParameterMap().forEach((key, values) -> {
+                formData.put(key, values.length > 0 ? values[0] : null);
+            });
+            //如果没有指明用户ID和密码，则返回失败
+            if(!(formData.containsKey("author_id")&& formData.containsKey("password"))){
+                sqlSession.close();
+                System.out.println("参数缺少");
+                System.out.println(formData.toString());
+                return ResponseEntity.ok().body("Fail");
+            }
+            if((!formData.containsKey("plugin_id")) || (!formData.containsKey("version") ) ){
+                sqlSession.close();
+                System.out.println(formData.toString());
+                return ResponseEntity.ok().body("Fail");
+            }
+            String author_id=formData.get("author_id");
+            String password=formData.get("password");
+            String plugin_id=formData.get("plugin_id");
+            String plugin_version=formData.get("version");
+            //获取包名
+            String package_name=formData.get("package_name");
+            AuthorMapper authorMapper = sqlSession.getMapper(AuthorMapper.class);
+            //如果密码验证不通过
+            if(! Author.isAuthorPass(author_id,password,authorMapper)){
+                sqlSession.close();
+                System.out.println("密码验证不通过");
+                return ResponseEntity.ok().body("Fail");
+            }
+            VersionMapper versionMapper=sqlSession.getMapper(VersionMapper.class);
+            Version version=versionMapper.selectByIDAndVersion(plugin_id,plugin_version);
+
+            PluginMapper pluginMapper=sqlSession.getMapper(PluginMapper.class);
+            Plugin plugin=pluginMapper.selectByID(plugin_id);
+            //如果不存在plugin或者plugin不属于该作者，返回失败
+            if(plugin==null || !plugin.getAuthor_id().equals(author_id)){
+                sqlSession.close();
+                System.out.println("不属于该作者");
+                System.out.println(plugin.getAuthor_id());
+                System.out.println(author_id);
+                return ResponseEntity.ok().body("Fail");
+            }
+
+
+            //结果数组
+            Map<String,String> result_map=new HashMap<String,String>();
+            //如果version存在，则替换,不对数据库进行更改
+            if(version!=null){
+                String path=this.path+"\\"+version.getPath();
+                FileUtil.delete(path);
+                versionMapper.deleteVersion(plugin_id,plugin_version);
+            }
+            //不存在
+            else{
+                sqlSession.close();
+                return ResponseEntity.ok("Fail");
+            }
+            result_map.put("author_id",author_id);
+            result_map.put("plugin_id",plugin_id);
+            result_map.put("version",plugin_version);
+
+            sqlSession.close();
+            return ResponseEntity.ok(result_map);
+        } catch (Exception e) {
+            e.printStackTrace();
+            sqlSession.close();
+            return ResponseEntity.ok("Fail");
+
+        }
+    }
+
+
+
 }

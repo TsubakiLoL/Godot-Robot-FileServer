@@ -32,6 +32,8 @@ public class FileHttpControler {
 
     @Value("${Http.download_path:D:\\}")
     private String path;
+
+
     // 从服务器文件系统下载文件
     @GetMapping("/download/{path}")
     public ResponseEntity<InputStreamResource> downloadFromServer(@PathVariable(value="path") String r_path) throws IOException {

@@ -19,7 +19,9 @@ public class GetSqlsession {
             try {
                 inputStream = Resources.getResourceAsStream("mybatis-config.xml");
             } catch (IOException e) {
+                System.out.println("构建出错");
                 e.printStackTrace();
+
             }
         }
 

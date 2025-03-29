@@ -31,6 +31,7 @@ public class AuthorHttpControler {
 
             if (!formData.containsKey("id") || !formData.containsKey("password")) {
                 System.out.println("请求参数不全");
+                System.out.println(formData.toString());
                 return ResponseEntity.ok("Fail");
             }
             String id = formData.get("id");
@@ -53,7 +54,7 @@ public class AuthorHttpControler {
                 System.out.println("密码不正确:"+MD5+","+password);
                 return ResponseEntity.ok("Fail");
             }
-            return ResponseEntity.ok("OK");
+            return ResponseEntity.ok(Map.of("id",id,"name",author.getName()));
         } catch (Exception e) {
             System.out.println("抛出错误"+e.toString());
             return ResponseEntity.ok("Fail");

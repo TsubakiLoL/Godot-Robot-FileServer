@@ -2,10 +2,11 @@ package tsubaki.database.entity;
 
 public class Version {
     private String plugin_id;
-    private String version_id;
+    private String version;
 
     private String path;
 
+    private String package_name;
 
 
     public String getPlugin_id() {
@@ -16,12 +17,12 @@ public class Version {
         this.plugin_id = plugin_id;
     }
 
-    public String getVersion_id() {
-        return version_id;
+    public String getVersion() {
+        return version;
     }
 
     public void setVersion_id(String version_id) {
-        this.version_id = version_id;
+        this.version = version;
     }
 
     public String getPath() {
@@ -37,8 +38,20 @@ public class Version {
     public String toString() {
         return "Version{" +
                 "plugin_id='" + plugin_id + '\'' +
-                ", version_id='" + version_id + '\'' +
+                ", version_id='" + version + '\'' +
                 ", path='" + path + '\'' +
                 '}';
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
+    }
+
+    public String getPackage_name() {
+        return package_name;
+    }
+
+    public void setPackage_name(String package_name) {
+        this.package_name = package_name;
     }
 }
