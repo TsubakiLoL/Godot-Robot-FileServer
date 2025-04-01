@@ -12,6 +12,9 @@ public interface NodeSetMapper {
 
     List<NodeSet> selectByName(String name);
 
+
+    NodeSet selectBySetID(String set_id);
+
     void addNodeSet( String set_id, String author_id, String introduction, String name, String path);
 
 

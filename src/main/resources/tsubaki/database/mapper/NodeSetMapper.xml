@@ -16,6 +16,9 @@
     <select id="selectByAuthorID" resultType="NodeSet">
         select * from NodeSet where author_id like #{id}
     </select>
+    <select id="selectBySetID" resultType="tsubaki.database.entity.NodeSet">
+        select * from NodeSet where set_id = #{set_id}
+    </select>
     <insert id="addNodeSet">
         insert into NodeSet (set_id,author_id,introduction,name,path) VALUES(
         #{set_id},

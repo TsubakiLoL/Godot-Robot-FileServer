@@ -13,6 +13,16 @@
         )
 
     </insert>
+    <update id="updatePlugin">
+        update Plugin
+        set name =#{name} , introduction = #{introduction}
+        where plugin_id = #{plugin_id}
+    </update>
+    <delete id="deletePlugin">
+        delete from Plugin
+        where
+        plugin_id = #{plugin_id}
+    </delete>
 
     <select id="selectAll" resultType="tsubaki.database.entity.Plugin">
         select * from Plugin;

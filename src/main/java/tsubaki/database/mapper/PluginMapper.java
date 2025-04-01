@@ -18,4 +18,11 @@ public interface PluginMapper {
 
 
     void insertPlugin(String plugin_id,String name,String author_id,String introduction);
+
+
+
+    void updatePlugin(String plugin_id,String name,String introduction);
+
+
+    void deletePlugin(String plugin_id);
 }

@@ -10,7 +10,6 @@ import java.nio.charset.StandardCharsets;
 @Component("processer")
 public class Processer {
     public Processer(){
-        System.out.println("processer实例化");
     }
 
     //处理文本消息
