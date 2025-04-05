@@ -2,17 +2,14 @@ spring:
   datasource:
     type: com.zaxxer.hikari.HikariDataSource
     driver-class-name: org.sqlite.JDBC
-    url: "jdbc:sqlite:src/main/resources/data.db"
+    url: "jdbc:sqlite:data.db"
     username: root
     password: root
+server:
+  port: 9997
 
-#D:/SQLiteStudio/Database/data.db
 
-FileSystem:
-  chatNodeSavePath: "D:\\SQLiteStudio\\Database\\"
-#Http:
-  #download_path: "D:\\"
 
 Http:
-  download_path:  "D:\\file_server_test"
-  server_address: "http://localhost:8080"
+  download_path:  "/app/download"
+  server_address: "http://8.219.243.185:9997"

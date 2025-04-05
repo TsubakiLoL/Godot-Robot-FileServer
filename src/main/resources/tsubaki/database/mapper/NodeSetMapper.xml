@@ -29,8 +29,8 @@
         )
     </insert>
     <delete id="deleteNodeSetBySetID">
-        delete NodeSet
-        where set_id=#{set_id}
+        delete from NodeSet
+        where set_id = #{set_id}
     </delete>
     <delete id="deleteNodeSetByAuthorID">
         delete NodeSet

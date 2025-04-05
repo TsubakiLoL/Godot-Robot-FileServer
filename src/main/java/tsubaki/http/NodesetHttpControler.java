@@ -173,15 +173,18 @@ public class NodesetHttpControler {
             Map result_map=new HashMap();
             result_map.put("content",content);
             NodeSetMapper nodeSetMapper=sqlSession.getMapper(NodeSetMapper.class);
+            AuthorMapper authorMapper=sqlSession.getMapper(AuthorMapper.class);
             List<NodeSet> nodeSets=nodeSetMapper.selectByName("%"+content+"%");
             Map[] cache_array=new Map[nodeSets.size()];
             for(int i=0;i<nodeSets.size();i++){
                 Map cache=new HashMap<>();
                 NodeSet p= nodeSets.get(i);
                 cache.put("nodeset_id",p.getSet_id());
-                cache.put("name",p.getName());
+                cache.put("nodeset_name",p.getName());
                 cache.put("author_id",p.getAuthor_id());
+                Author author=authorMapper.selectByID(p.getAuthor_id());
                 cache.put("introduction",p.getIntroduction());
+                cache.put("author_name",author.getName());
                 cache_array[i]=cache;
             }
             result_map.put("nodeset",cache_array);
@@ -221,9 +224,10 @@ public class NodesetHttpControler {
                 return ResponseEntity.ok("Fail");
             }
             result_map.put("nodeset_id",nodeSet.getSet_id());
-            result_map.put("name",nodeSet.getName());
+            result_map.put("nodeset_name",nodeSet.getName());
             result_map.put("author_id",nodeSet.getAuthor_id());
             result_map.put("introduction",nodeSet.getIntroduction());
+            result_map.put("path",server_address+"/files/download/"+nodeSet.getPath());
             sqlSession.close();
             Gson gson=new Gson();
             System.out.println(gson.toJson(result_map));

@@ -121,6 +121,15 @@
                     <target>15</target>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <mainClass>
+                        tsubaki.Loader
+                    </mainClass>
+                </configuration>
+            </plugin>
         </plugins>
         <extensions>
             <!--archetype扩展-->
@@ -129,5 +138,6 @@
                 <artifactId>archetype-packaging</artifactId>
             </extension>
         </extensions>
+
     </build>
 </project>

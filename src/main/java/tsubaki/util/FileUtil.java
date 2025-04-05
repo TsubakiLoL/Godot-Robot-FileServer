@@ -37,6 +37,7 @@ public class FileUtil {
     }
     public static Boolean delete(String filePath) {
         File file = new File(filePath);
+        System.out.println("文件目录"+filePath);
         if (file.exists()) {
             file.delete();
             System.out.println("===========删除成功=================");
