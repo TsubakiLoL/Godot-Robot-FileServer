@@ -10,6 +10,7 @@ public class Author {
     private String name;
     private String password;
 
+    private String head;
     public String getAuthor_id() {
         return author_id;
     }
@@ -34,19 +35,29 @@ public class Author {
         this.password = password;
     }
 
+    public String getHead() {
+        return head;
+    }
+
+    public void setHead(String head) {
+        this.head = head;
+    }
+
     @Override
     public String toString() {
         return "Author{" +
                 "author_id='" + author_id + '\'' +
                 ", name='" + name + '\'' +
                 ", password='" + password + '\'' +
+                ", head='" + head + '\'' +
                 '}';
     }
 
+
     //返回author是否密码验证通过
 
-    public static boolean isAuthorPass(String author_id, String password, AuthorMapper authorMapper){
-        Author author = authorMapper.selectByID(author_id);
+    public static boolean isAuthorPass(String author_name, String password, AuthorMapper authorMapper){
+        Author author = authorMapper.selectByNameUnique(author_name);
         if (author == null) {
 
             return false;

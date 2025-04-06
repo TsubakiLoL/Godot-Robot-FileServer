@@ -14,14 +14,19 @@ public interface AuthorMapper {
     //通过昵称查找作者
     List<Author> selectByName(String name);
 
+    Author selectByNameUnique(String name);
+
     //判定作者密码是否通过
     Author isAuthorPass(String author_id,String password);
 
-    void addAuthor(String author_id,String name,String password);
+    void addAuthor(String author_id,String name,String password,String head);
 
 
     void updateAuthorPassword(String author_id,String new_password);
 
     void updateAuthorName(String author_id,String new_name);
+
+
+    void updateAuthorHead(String author_id,String head);
 
 }

@@ -53,7 +53,7 @@ public class NodesetHttpControler {
             // 获取文件
             Map<String, MultipartFile> files = request.getFileMap();
             //如果没有指明用户ID和密码，则返回失败
-            if(!(formData.containsKey("author_id")&& formData.containsKey("password"))){
+            if(!(formData.containsKey("author_name")&& formData.containsKey("password"))){
                 sqlSession.close();
                 return ResponseEntity.ok().body("Fail");
             }
@@ -61,7 +61,7 @@ public class NodesetHttpControler {
                 sqlSession.close();
                 return ResponseEntity.ok().body("Fail");
             }
-            String author_id=formData.get("author_id");
+            String author_name=formData.get("author_name");
             String password=formData.get("password");
             String nodeset_name=formData.get("nodeset_name");
             String nodeset_introduction="";
@@ -70,12 +70,12 @@ public class NodesetHttpControler {
             }
             AuthorMapper authorMapper = sqlSession.getMapper(AuthorMapper.class);
             //如果密码验证不通过
-            if(! Author.isAuthorPass(author_id,password,authorMapper)){
+            if(! Author.isAuthorPass(author_name,password,authorMapper)){
                 sqlSession.close();
                 return ResponseEntity.ok().body("Fail");
             }
             Map<String,String> result_map=new HashMap<String,String>();
-            result_map.put("author_id",author_id);
+            result_map.put("author_name",author_name);
             result_map.put("nodeset_name",nodeset_name);
             result_map.put("introduction",nodeset_introduction);
 
@@ -84,7 +84,8 @@ public class NodesetHttpControler {
 
             String file_path=writeFile(fileInputStream,".nodeset");
             NodeSetMapper nodeSetMapper=sqlSession.getMapper(NodeSetMapper.class);
-            String nodeset_id=createNodeset(author_id,nodeset_name,nodeset_introduction,file_path,nodeSetMapper);
+            Author author=authorMapper.selectByNameUnique(author_name);
+            String nodeset_id=createNodeset(author.getAuthor_id(),nodeset_name,nodeset_introduction,file_path,nodeSetMapper);
             result_map.put("nodeset_id",nodeset_id);
             sqlSession.close();
             return ResponseEntity.ok(result_map);
@@ -108,7 +109,7 @@ public class NodesetHttpControler {
                 formData.put(key, values.length > 0 ? values[0] : null);
             });
             //如果没有指明用户ID和密码，则返回失败
-            if(!(formData.containsKey("author_id")&& formData.containsKey("password"))){
+            if(!(formData.containsKey("author_name")&& formData.containsKey("password"))){
                 sqlSession.close();
                 return ResponseEntity.ok().body("Fail");
             }
@@ -116,29 +117,31 @@ public class NodesetHttpControler {
                 sqlSession.close();
                 return ResponseEntity.ok().body("Fail");
             }
-            String author_id=formData.get("author_id");
+            String author_name=formData.get("author_name");
             String password=formData.get("password");
             String nodeset_id=formData.get("nodeset_id");
             AuthorMapper authorMapper = sqlSession.getMapper(AuthorMapper.class);
             //如果密码验证不通过
-            if(! Author.isAuthorPass(author_id,password,authorMapper)){
+            if(! Author.isAuthorPass(author_name,password,authorMapper)){
                 sqlSession.close();
                 return ResponseEntity.ok().body("Fail");
             }
             Map<String,String> result_map=new HashMap<String,String>();
-            result_map.put("author_id",author_id);
+            result_map.put("author_name",author_name);
             result_map.put("nodeset_id",nodeset_id);
 
 
             NodeSetMapper nodeSetMapper=sqlSession.getMapper(NodeSetMapper.class);
+
 
             NodeSet nodeSet=nodeSetMapper.selectBySetID(nodeset_id);
             if(nodeSet==null){
                 sqlSession.close();
                 return ResponseEntity.ok().body("Fail");
             }
+            Author author=authorMapper.selectByNameUnique(author_name);
             //非本人拥有
-            if(!nodeSet.getAuthor_id().equals(author_id)){
+            if(!nodeSet.getAuthor_id().equals(author.getAuthor_id())){
                 sqlSession.close();
                 return ResponseEntity.ok().body("Fail");
             }

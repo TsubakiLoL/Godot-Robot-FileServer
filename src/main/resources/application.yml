@@ -1,10 +1,4 @@
-spring:
-  datasource:
-    type: com.zaxxer.hikari.HikariDataSource
-    driver-class-name: org.sqlite.JDBC
-    url: "jdbc:sqlite:data.db"
-    username: root
-    password: root
+
 server:
   port: 9997
 
@@ -13,3 +7,17 @@ server:
 Http:
   download_path:  "/app/download"
   server_address: "http://8.219.243.185:9997"
+
+
+
+spring:
+  datasource:
+    type: com.zaxxer.hikari.HikariDataSource
+    driver-class-name: org.sqlite.JDBC
+    url: "jdbc:sqlite:/app/data.db"
+    username: root
+    password: root
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB

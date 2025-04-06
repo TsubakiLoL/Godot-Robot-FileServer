@@ -51,7 +51,7 @@ public class PluginHttpControler {
                 formData.put(key, values.length > 0 ? values[0] : null);
             });
             //如果没有指明用户ID和密码，则返回失败
-            if(!(formData.containsKey("author_id")&& formData.containsKey("password"))){
+            if(!(formData.containsKey("author_name")&& formData.containsKey("password"))){
                 sqlSession.close();
                 return ResponseEntity.ok().body("Fail");
             }
@@ -59,7 +59,7 @@ public class PluginHttpControler {
                 sqlSession.close();
                 return ResponseEntity.ok().body("Fail");
             }
-            String author_id=formData.get("author_id");
+            String author_name=formData.get("author_name");
             String password=formData.get("password");
             String plugin_name=formData.get("plugin_name");
             String plugin_introduction="";
@@ -68,18 +68,18 @@ public class PluginHttpControler {
             }
             AuthorMapper authorMapper = sqlSession.getMapper(AuthorMapper.class);
             //如果密码验证不通过
-            if(! Author.isAuthorPass(author_id,password,authorMapper)){
+            if(! Author.isAuthorPass(author_name,password,authorMapper)){
                 sqlSession.close();
                 return ResponseEntity.ok().body("Fail");
             }
+            Author author=authorMapper.selectByNameUnique(author_name);
             Map<String,String> result_map=new HashMap<String,String>();
-            result_map.put("author_id",author_id);
+            result_map.put("author_name",author_name);
             result_map.put("plugin_name",plugin_name);
             result_map.put("introduction",plugin_introduction);
-            result_map.put("author_id",author_id);
 
             PluginMapper pluginMapper=sqlSession.getMapper(PluginMapper.class);
-            String plugin_id=createPlugin(author_id,plugin_name,plugin_introduction,pluginMapper);
+            String plugin_id=createPlugin(author.getAuthor_id(),plugin_name,plugin_introduction,pluginMapper);
             result_map.put("plugin_id",plugin_id);
             sqlSession.close();
             return ResponseEntity.ok(result_map);
@@ -104,7 +104,7 @@ public class PluginHttpControler {
             // 获取文件
             Map<String, MultipartFile> files = request.getFileMap();
             //如果没有指明用户ID和密码，则返回失败
-            if(!(formData.containsKey("author_id")&& formData.containsKey("password"))){
+            if(!(formData.containsKey("author_name")&& formData.containsKey("password"))){
                 sqlSession.close();
                 System.out.println("参数缺少");
                 System.out.println(formData.toString());
@@ -115,7 +115,7 @@ public class PluginHttpControler {
                 System.out.println(formData.toString());
                 return ResponseEntity.ok().body("Fail");
             }
-            String author_id=formData.get("author_id");
+            String author_name=formData.get("author_name");
             String password=formData.get("password");
             String plugin_id=formData.get("plugin_id");
             String plugin_version=formData.get("version");
@@ -123,7 +123,7 @@ public class PluginHttpControler {
             String package_name=formData.get("package_name");
             AuthorMapper authorMapper = sqlSession.getMapper(AuthorMapper.class);
             //如果密码验证不通过
-            if(! Author.isAuthorPass(author_id,password,authorMapper)){
+            if(! Author.isAuthorPass(author_name,password,authorMapper)){
                 sqlSession.close();
                 System.out.println("密码验证不通过");
                 return ResponseEntity.ok().body("Fail");
@@ -131,14 +131,14 @@ public class PluginHttpControler {
             VersionMapper versionMapper=sqlSession.getMapper(VersionMapper.class);
             Version version=versionMapper.selectByIDAndVersion(plugin_id,plugin_version);
 
+            Author author=authorMapper.selectByNameUnique(author_name);
             PluginMapper pluginMapper=sqlSession.getMapper(PluginMapper.class);
             Plugin plugin=pluginMapper.selectByID(plugin_id);
             //如果不存在plugin或者plugin不属于该作者，返回失败
-            if(plugin==null || !plugin.getAuthor_id().equals(author_id)){
+            if(plugin==null || !plugin.getAuthor_id().equals(author.getAuthor_id())){
                 sqlSession.close();
                 System.out.println("不属于该作者");
                 System.out.println(plugin.getAuthor_id());
-                System.out.println(author_id);
                 return ResponseEntity.ok().body("Fail");
             }
             //强转类型
@@ -162,7 +162,7 @@ public class PluginHttpControler {
                 versionMapper.insertVersion(plugin_id,plugin_version,write_path,package_name);
                 result_map.put("path",write_path);
             }
-            result_map.put("author_id",author_id);
+            result_map.put("author_name",author_name);
             result_map.put("plugin_id",plugin_id);
             result_map.put("version",plugin_version);
 
@@ -244,13 +244,13 @@ public class PluginHttpControler {
             request.getParameterMap().forEach((key, values) -> {
                 formData.put(key, values.length > 0 ? values[0] : null);
             });
-            if(!formData.containsKey("id")){
+            if(!formData.containsKey("author_name")){
                 sqlSession.close();
                 return ResponseEntity.ok("Fail");
             }
-            String author_id=formData.get("id");
+            String author_name=formData.get("author_name");
             AuthorMapper authorMapper=sqlSession.getMapper(AuthorMapper.class);
-            Author author=authorMapper.selectByID(author_id);
+            Author author=authorMapper.selectByNameUnique(author_name);
             if(author==null){
                 sqlSession.close();
                 return ResponseEntity.ok("Fail");
@@ -262,7 +262,7 @@ public class PluginHttpControler {
             PluginMapper pluginMapper=sqlSession.getMapper(PluginMapper.class);
             VersionMapper versionMapper=sqlSession.getMapper(VersionMapper.class);
             //检索插件
-            List<Plugin> pluginList=pluginMapper.selectByAuthorID(author_id);
+            List<Plugin> pluginList=pluginMapper.selectByAuthorID(author.getAuthor_id());
             Map[] cache_array=new Map[pluginList.size()];
             for(int i=0;i<pluginList.size();i++){
                 Map cache=new HashMap<>();
@@ -307,13 +307,13 @@ public class PluginHttpControler {
             request.getParameterMap().forEach((key, values) -> {
                 formData.put(key, values.length > 0 ? values[0] : null);
             });
-            if(!formData.containsKey("id")){
+            if(!formData.containsKey("author_name")){
                 sqlSession.close();
                 return ResponseEntity.ok("Fail");
             }
-            String author_id=formData.get("id");
+            String author_name=formData.get("author_name");
             AuthorMapper authorMapper=sqlSession.getMapper(AuthorMapper.class);
-            Author author=authorMapper.selectByID(author_id);
+            Author author=authorMapper.selectByNameUnique(author_name);
             if(author==null){
                 sqlSession.close();
                 return ResponseEntity.ok("Fail");
@@ -325,7 +325,7 @@ public class PluginHttpControler {
             PluginMapper pluginMapper=sqlSession.getMapper(PluginMapper.class);
             VersionMapper versionMapper=sqlSession.getMapper(VersionMapper.class);
             //检索插件
-            List<Plugin> pluginList=pluginMapper.selectByAuthorID(author_id);
+            List<Plugin> pluginList=pluginMapper.selectByAuthorID(author.getAuthor_id());
             Map[] cache_array=new Map[pluginList.size()];
             for(int i=0;i<pluginList.size();i++){
                 Map cache=new HashMap<>();
@@ -351,7 +351,7 @@ public class PluginHttpControler {
             result_map.put("plugin",cache_array);
 
             NodeSetMapper nodeSetMapper=sqlSession.getMapper(NodeSetMapper.class);
-            List<NodeSet> nodeSets=nodeSetMapper.selectByAuthorID(author_id);
+            List<NodeSet> nodeSets=nodeSetMapper.selectByAuthorID(author.getAuthor_id());
 
             Map[] nodeArray=new Map[nodeSets.size()];
             for(int i=0;i<nodeSets.size();i++){
@@ -494,7 +494,7 @@ public class PluginHttpControler {
                 formData.put(key, values.length > 0 ? values[0] : null);
             });
             //如果没有指明用户ID和密码，则返回失败
-            if(!(formData.containsKey("author_id")&& formData.containsKey("password"))){
+            if(!(formData.containsKey("author_name")&& formData.containsKey("password"))){
                 sqlSession.close();
                 System.out.println("参数缺少");
                 System.out.println(formData.toString());
@@ -505,7 +505,7 @@ public class PluginHttpControler {
                 System.out.println(formData.toString());
                 return ResponseEntity.ok().body("Fail");
             }
-            String author_id=formData.get("author_id");
+            String author_name=formData.get("author_name");
             String password=formData.get("password");
             String plugin_id=formData.get("plugin_id");
             String plugin_version=formData.get("version");
@@ -513,7 +513,7 @@ public class PluginHttpControler {
             String package_name=formData.get("package_name");
             AuthorMapper authorMapper = sqlSession.getMapper(AuthorMapper.class);
             //如果密码验证不通过
-            if(! Author.isAuthorPass(author_id,password,authorMapper)){
+            if(! Author.isAuthorPass(author_name,password,authorMapper)){
                 sqlSession.close();
                 System.out.println("密码验证不通过");
                 return ResponseEntity.ok().body("Fail");
@@ -523,12 +523,12 @@ public class PluginHttpControler {
 
             PluginMapper pluginMapper=sqlSession.getMapper(PluginMapper.class);
             Plugin plugin=pluginMapper.selectByID(plugin_id);
+            Author author=authorMapper.selectByNameUnique(author_name);
             //如果不存在plugin或者plugin不属于该作者，返回失败
-            if(plugin==null || !plugin.getAuthor_id().equals(author_id)){
+            if(plugin==null || !plugin.getAuthor_id().equals(author.getAuthor_id())){
                 sqlSession.close();
                 System.out.println("不属于该作者");
                 System.out.println(plugin.getAuthor_id());
-                System.out.println(author_id);
                 return ResponseEntity.ok().body("Fail");
             }
 
@@ -545,7 +545,7 @@ public class PluginHttpControler {
                 sqlSession.close();
                 return ResponseEntity.ok("Fail");
             }
-            result_map.put("author_id",author_id);
+            result_map.put("author_id",author.getAuthor_id());
             result_map.put("plugin_id",plugin_id);
             result_map.put("version",plugin_version);
 
@@ -570,7 +570,7 @@ public class PluginHttpControler {
                 formData.put(key, values.length > 0 ? values[0] : null);
             });
             //如果没有指明用户ID和密码，则返回失败
-            if(!(formData.containsKey("author_id")&& formData.containsKey("password"))){
+            if(!(formData.containsKey("author_name")&& formData.containsKey("password"))){
                 sqlSession.close();
                 System.out.println("参数缺少");
                 System.out.println(formData.toString());
@@ -582,27 +582,28 @@ public class PluginHttpControler {
                 System.out.println(formData.toString());
                 return ResponseEntity.ok().body("Fail");
             }
-            String author_id=formData.get("author_id");
+            String author_name=formData.get("author_name");
             String password=formData.get("password");
             String plugin_id=formData.get("plugin_id");
             //获取包名
             String package_name=formData.get("package_name");
             AuthorMapper authorMapper = sqlSession.getMapper(AuthorMapper.class);
             //如果密码验证不通过
-            if(! Author.isAuthorPass(author_id,password,authorMapper)){
+            if(! Author.isAuthorPass(author_name,password,authorMapper)){
                 sqlSession.close();
                 System.out.println("密码验证不通过");
                 return ResponseEntity.ok().body("Fail");
             }
 
+            Author author=authorMapper.selectByNameUnique(author_name);
             PluginMapper pluginMapper=sqlSession.getMapper(PluginMapper.class);
             Plugin plugin=pluginMapper.selectByID(plugin_id);
             //如果不存在plugin或者plugin不属于该作者，返回失败
-            if(plugin==null || !plugin.getAuthor_id().equals(author_id)){
+            if(plugin==null || !plugin.getAuthor_id().equals(author.getAuthor_id())){
                 sqlSession.close();
                 System.out.println("不属于该作者");
                 System.out.println(plugin.getAuthor_id());
-                System.out.println(author_id);
+                System.out.println(author_name);
                 return ResponseEntity.ok().body("Fail");
             }
 
@@ -619,7 +620,7 @@ public class PluginHttpControler {
             pluginMapper.updatePlugin(plugin_id,plugin_name,plugin_introduction);
             //结果数组
             Map<String,String> result_map=new HashMap<String,String>();
-            result_map.put("author_id",author_id);
+            result_map.put("author_name",author_name);
             result_map.put("plugin_id",plugin_id);
             result_map.put("plugin_name",plugin_name);
             result_map.put("plugin_introduction",plugin_introduction);
@@ -644,7 +645,7 @@ public class PluginHttpControler {
                 formData.put(key, values.length > 0 ? values[0] : null);
             });
             //如果没有指明用户ID和密码，则返回失败
-            if(!(formData.containsKey("author_id")&& formData.containsKey("password"))){
+            if(!(formData.containsKey("author_name")&& formData.containsKey("password"))){
                 sqlSession.close();
                 System.out.println("参数缺少");
                 System.out.println(formData.toString());
@@ -656,26 +657,27 @@ public class PluginHttpControler {
                 System.out.println(formData.toString());
                 return ResponseEntity.ok().body("Fail");
             }
-            String author_id=formData.get("author_id");
+            String author_name=formData.get("author_name");
             String password=formData.get("password");
             String plugin_id=formData.get("plugin_id");
             //获取包名
             String package_name=formData.get("package_name");
             AuthorMapper authorMapper = sqlSession.getMapper(AuthorMapper.class);
             //如果密码验证不通过
-            if(! Author.isAuthorPass(author_id,password,authorMapper)){
+            if(! Author.isAuthorPass(author_name,password,authorMapper)){
                 sqlSession.close();
                 System.out.println("密码验证不通过");
                 return ResponseEntity.ok().body("Fail");
             }
 
+            Author author=authorMapper.selectByNameUnique(author_name);
             PluginMapper pluginMapper=sqlSession.getMapper(PluginMapper.class);
             Plugin plugin=pluginMapper.selectByID(plugin_id);
             //如果不存在plugin或者plugin不属于该作者，返回失败
-            if(plugin==null || !plugin.getAuthor_id().equals(author_id)){
+            if(plugin==null || !plugin.getAuthor_id().equals(author.getAuthor_id())){
                 sqlSession.close();
                 System.out.println("不属于该作者");
-                System.out.println(author_id);
+                System.out.println(author_name);
                 return ResponseEntity.ok().body("Fail");
             }
 
@@ -701,7 +703,7 @@ public class PluginHttpControler {
 
             //结果数组
             Map<String,String> result_map=new HashMap<String,String>();
-            result_map.put("author_id",author_id);
+            result_map.put("author_name",author_name);
             result_map.put("plugin_id",plugin_id);
             result_map.put("plugin_name",plugin_name);
             result_map.put("plugin_introduction",plugin_introduction);

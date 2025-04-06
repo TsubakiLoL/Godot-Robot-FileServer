@@ -15,11 +15,15 @@
     <select id="isAuthorPass" resultType="tsubaki.database.entity.Author">
         select * from Author where author_id =#{author_id} and password = #{password}
     </select>
+    <select id="selectByNameUnique" resultType="tsubaki.database.entity.Author">
+        select * from Author where name = #{name}
+    </select>
     <insert id="addAuthor" >
-        insert into Author (author_id,name,password) VALUES(
+        insert into Author (author_id,name,password,head) VALUES(
             #{author_id},
             #{name},
-            #{password}
+            #{password},
+            #{head}
         )
     </insert>
     <!--更新用户密码-->
@@ -34,6 +38,11 @@
         set name=#{new_name}
         where author_id=#{author_id}
 
+    </update>
+    <update id="updateAuthorHead">
+        update Author
+        set head=#{head}
+        where author_id=#{author_id}
     </update>
 
 </mapper>

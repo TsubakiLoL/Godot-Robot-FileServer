@@ -29,34 +29,28 @@ public class AuthorHttpControler {
                 formData.put(key, values.length > 0 ? values[0] : null);
             });
 
-            if (!formData.containsKey("id") || !formData.containsKey("password")) {
+            if (!formData.containsKey("author_name") || !formData.containsKey("password") ) {
                 System.out.println("请求参数不全");
                 System.out.println(formData.toString());
                 return ResponseEntity.ok("Fail");
             }
-            String id = formData.get("id");
+            String author_name = formData.get("author_name");
             String password = formData.get("password");
-
 
             SqlSession sqlSession = GetSqlsession.getsqlsession();
             AuthorMapper authorMapper = sqlSession.getMapper(AuthorMapper.class);
-            Author author = authorMapper.selectByID(id);
+
+
+            if (!Author.isAuthorPass(author_name,password,authorMapper)) {
+                sqlSession.close();
+                return ResponseEntity.ok("Fail");
+            }
+            Author author = authorMapper.selectByNameUnique(author_name);
             sqlSession.close();
-            if (author == null) {
-                System.out.println("未找到用户");
-
-                return ResponseEntity.ok("Fail");
-
-            }
-            String MD5 = MD5Util.generateMD5(author.getPassword());
-
-            if (!(MD5.equals( password))) {
-                System.out.println("密码不正确:"+MD5+","+password);
-                return ResponseEntity.ok("Fail");
-            }
-            return ResponseEntity.ok(Map.of("id",id,"name",author.getName()));
+            return ResponseEntity.ok(Map.of("id",author.getAuthor_id(),"name",author.getName(),"head",author.getHead()));
         } catch (Exception e) {
             System.out.println("抛出错误"+e.toString());
+
             return ResponseEntity.ok("Fail");
 
         }
@@ -75,16 +69,23 @@ public class AuthorHttpControler {
                 formData.put(key, values.length > 0 ? values[0] : null);
             });
 
-            if (!formData.containsKey("name") || !formData.containsKey("password")) {
+            if (!formData.containsKey("name") || !formData.containsKey("password") ||!formData.containsKey("head")) {
                 System.out.println("请求参数不全");
                 return ResponseEntity.ok("Fail");
             }
             String name = formData.get("name");
             String password = formData.get("password");
+            String head=formData.get("head");
 
-
-            String author_id=signUpAuthor(name,password);
-            return ResponseEntity.ok(Map.of("id",author_id,"name",name,"password",password));
+            SqlSession sqlSession = GetSqlsession.getsqlsession();
+            AuthorMapper authorMapper = sqlSession.getMapper(AuthorMapper.class);
+            Author author = authorMapper.selectByNameUnique(name);
+            if(author!=null){
+                System.out.println("存在重名");
+                return ResponseEntity.ok("Fail");
+            }
+            String author_id=signUpAuthor(name,password,head);
+            return ResponseEntity.ok(Map.of("id",author_id,"name",name,"password",password,"head",head));
         } catch (Exception e) {
             System.out.println("抛出错误"+e.toString());
             return ResponseEntity.ok("Fail");
@@ -96,7 +97,7 @@ public class AuthorHttpControler {
 
 
     //注册用户返回ID
-    String signUpAuthor(String name,String password){
+    String signUpAuthor(String name,String password,String head){
         SqlSession sqlSession = GetSqlsession.getsqlsession();
         AuthorMapper authorMapper = sqlSession.getMapper(AuthorMapper.class);
         UUID uuid = UUID.randomUUID();
@@ -111,7 +112,7 @@ public class AuthorHttpControler {
             throw new RuntimeException("create_author_fail");
 
         }
-        authorMapper.addAuthor(uuid.toString(),name,password);
+        authorMapper.addAuthor(uuid.toString(),name,password,head);
         System.out.println(authorMapper.selectAll().toString());
         sqlSession.commit();
         sqlSession.close();
@@ -122,7 +123,7 @@ public class AuthorHttpControler {
 
 
     //更新用户信息
-    @PostMapping("/updateAuthor")
+    @PostMapping("/update")
     public ResponseEntity<?> handleUpdateAuthor(MultipartHttpServletRequest request) {
         SqlSession sqlSession = GetSqlsession.getsqlsession();
         try {
@@ -132,7 +133,7 @@ public class AuthorHttpControler {
                 formData.put(key, values.length > 0 ? values[0] : null);
             });
             //如果没有指明用户ID和密码，则返回失败
-            if(!(formData.containsKey("author_id")&& formData.containsKey("password"))){
+            if(!(formData.containsKey("author_name")&& formData.containsKey("password"))){
                 sqlSession.close();
                 return ResponseEntity.ok().body("Fail");
             }
@@ -140,27 +141,34 @@ public class AuthorHttpControler {
 
 
 
-            String author_id=formData.get("author_id");
+            String author_name=formData.get("author_name");
             String password=formData.get("password");
             AuthorMapper authorMapper = sqlSession.getMapper(AuthorMapper.class);
             //如果密码验证不通过
-            if(! Author.isAuthorPass(author_id,password,authorMapper)){
+            if(! Author.isAuthorPass(author_name,password,authorMapper)){
                 sqlSession.close();
                 return ResponseEntity.ok().body("Fail");
             }
+            Author author = authorMapper.selectByNameUnique(author_name);
             Map<String,String> result_map=new HashMap<String,String>();
-            result_map.put("author_id",author_id);
+            result_map.put("author_name",author_name);
             //如果要更新名字
             if(formData.containsKey("name") ){
                 String name = formData.get("name");
-                authorMapper.updateAuthorName(author_id,name);
+                authorMapper.updateAuthorName(author.getAuthor_id(),name);
                 result_map.put("name",name);
 
             }
             if(formData.containsKey("new_password")){
-                String new_password=formData.get("new_pasword");
-                authorMapper.updateAuthorPassword(author_id,new_password);
+                String new_password=formData.get("new_password");
+                authorMapper.updateAuthorPassword(author.getAuthor_id(),new_password);
                 result_map.put("password",new_password);
+            }
+
+            if(formData.containsKey("head")){
+                String head=formData.get("head");
+                authorMapper.updateAuthorHead(author.getAuthor_id(),head);
+                result_map.put("head",head);
             }
 
             sqlSession.close();

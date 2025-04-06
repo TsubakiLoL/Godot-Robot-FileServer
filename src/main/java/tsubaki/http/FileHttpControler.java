@@ -38,7 +38,8 @@ public class FileHttpControler {
     @GetMapping("/download/{path}")
     public ResponseEntity<InputStreamResource> downloadFromServer(@PathVariable(value="path") String r_path) throws IOException {
         Path filePath = Paths.get(path, r_path).normalize().toAbsolutePath();
-        if (!filePath.startsWith(path)) {
+        String path_abs=Paths.get(path).normalize().toAbsolutePath().toString();
+        if (!filePath.startsWith(path_abs)) {
             System.out.println(path+" :"+r_path+":"+filePath);
             System.out.println("Error:路径无权访问");
             return ResponseEntity.status(403).build(); // 路径越权检查
