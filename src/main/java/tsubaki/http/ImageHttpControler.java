@@ -14,6 +14,8 @@ import tsubaki.database.entity.Author;
 import tsubaki.database.mapper.AuthorMapper;
 import tsubaki.database.mapper.NodeSetMapper;
 import tsubaki.database.mybatis.GetSqlsession;
+import tsubaki.file.LockedFileInputStreamFix;
+import tsubaki.file.LockedFileOutputStreamFix;
 import tsubaki.util.FileUtil;
 import tsubaki.util.MD5Util;
 
@@ -81,9 +83,10 @@ public class ImageHttpControler {
 
 
         File file = FileUtil.createFileIfNotExists(filePath.toString());
-        FileOutputStream fileOutputStream = new FileOutputStream(file);
-        LockedFileOutputStream lockedFileOutputStream= new LockedFileOutputStream(fileOutputStream);
-        FileUtil.writeInputStreamtoOutputStream(inputStream,lockedFileOutputStream);
+        //FileOutputStream fileOutputStream = new FileOutputStream(file);
+        //LockedFileOutputStream lockedFileOutputStream= new LockedFileOutputStream(fileOutputStream);
+        LockedFileOutputStreamFix lockedFileOutputStreamFix=new LockedFileOutputStreamFix(filePath.toString());
+        FileUtil.writeInputStreamtoOutputStream(inputStream,lockedFileOutputStreamFix);
         return uuid.toString().replace("-","")+back;
     }
 

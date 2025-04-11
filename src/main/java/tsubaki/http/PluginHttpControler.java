@@ -5,6 +5,7 @@ package tsubaki.http;
 import com.google.gson.Gson;
 import org.apache.ibatis.session.SqlSession;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,6 +20,7 @@ import tsubaki.database.mapper.NodeSetMapper;
 import tsubaki.database.mapper.PluginMapper;
 import tsubaki.database.mapper.VersionMapper;
 import tsubaki.database.mybatis.GetSqlsession;
+import tsubaki.file.LockedFileOutputStreamFix;
 import tsubaki.util.FileUtil;
 
 import java.io.*;
@@ -151,9 +153,10 @@ public class PluginHttpControler {
                 //写入之前文件
                 Path filePath = Paths.get(path, version.getPath()).normalize().toAbsolutePath();
                 File file = FileUtil.createFileIfNotExists(filePath.toString());
-                FileOutputStream fileOutputStream = new FileOutputStream(file);
-                LockedFileOutputStream lockedFileOutputStream= new LockedFileOutputStream(fileOutputStream);
-                FileUtil.writeInputStreamtoOutputStream(fileInputStream,lockedFileOutputStream);
+                //FileOutputStream fileOutputStream = new FileOutputStream(file);
+                LockedFileOutputStreamFix lockedFileOutputStreamFix=new LockedFileOutputStreamFix(filePath.toString());
+                //LockedFileOutputStream lockedFileOutputStream= new LockedFileOutputStream(fileOutputStream);
+                FileUtil.writeInputStreamtoOutputStream(fileInputStream,lockedFileOutputStreamFix);
                 result_map.put("path",version.getPath());
             }
             //不存在则创建，并写入数据库
@@ -209,9 +212,10 @@ public class PluginHttpControler {
 
 
         File file = FileUtil.createFileIfNotExists(filePath.toString());
-        FileOutputStream fileOutputStream = new FileOutputStream(file);
-        LockedFileOutputStream lockedFileOutputStream= new LockedFileOutputStream(fileOutputStream);
-        FileUtil.writeInputStreamtoOutputStream(inputStream,lockedFileOutputStream);
+        //FileOutputStream fileOutputStream = new FileOutputStream(file);
+        LockedFileOutputStreamFix lockedFileOutputStreamFix=new LockedFileOutputStreamFix(filePath.toString());
+        //LockedFileOutputStream lockedFileOutputStream= new LockedFileOutputStream(fileOutputStream);
+        FileUtil.writeInputStreamtoOutputStream(inputStream,lockedFileOutputStreamFix);
         return uuid.toString().replace("-","")+back;
     }
 

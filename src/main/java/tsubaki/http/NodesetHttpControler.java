@@ -19,6 +19,7 @@ import tsubaki.database.mapper.NodeSetMapper;
 import tsubaki.database.mapper.PluginMapper;
 import tsubaki.database.mapper.VersionMapper;
 import tsubaki.database.mybatis.GetSqlsession;
+import tsubaki.file.LockedFileOutputStreamFix;
 import tsubaki.util.FileUtil;
 
 import java.io.*;
@@ -146,6 +147,7 @@ public class NodesetHttpControler {
                 return ResponseEntity.ok().body("Fail");
             }
 
+            FileUtil.delete(path+"/"+nodeSet.getPath());
             nodeSetMapper.deleteNodeSetBySetID(nodeset_id);
             sqlSession.close();
             return ResponseEntity.ok(result_map);
@@ -274,9 +276,10 @@ public class NodesetHttpControler {
 
 
         File file = FileUtil.createFileIfNotExists(filePath.toString());
-        FileOutputStream fileOutputStream = new FileOutputStream(file);
-        LockedFileOutputStream lockedFileOutputStream= new LockedFileOutputStream(fileOutputStream);
-        FileUtil.writeInputStreamtoOutputStream(inputStream,lockedFileOutputStream);
+        //FileOutputStream fileOutputStream = new FileOutputStream(file);
+        //LockedFileOutputStream lockedFileOutputStream= new LockedFileOutputStream(fileOutputStream);
+        LockedFileOutputStreamFix lockedFileOutputStreamFix=new LockedFileOutputStreamFix(filePath.toString());
+        FileUtil.writeInputStreamtoOutputStream(inputStream,lockedFileOutputStreamFix);
         return uuid.toString().replace("-","")+back;
     }
 

@@ -1,7 +1,6 @@
 package tsubaki.http;
 
 
-import org.apache.ibatis.session.SqlSession;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
@@ -10,10 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
-import tsubaki.database.entity.Author;
-import tsubaki.database.mapper.AuthorMapper;
-import tsubaki.database.mybatis.GetSqlsession;
-import tsubaki.util.MD5Util;
+import tsubaki.file.LockedFileInputStreamFix;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -23,8 +19,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
-
 @RestController
 @RequestMapping("/files")
 public class FileHttpControler {
@@ -49,8 +43,8 @@ public class FileHttpControler {
         //建立输入流
         InputStreamResource resource ;
         try {
-            FileInputStream fileInputStream = new FileInputStream(file);
-            resource = new InputStreamResource(new LockedFileInputStream(fileInputStream));
+            System.out.println("尝试建立读取流:"+file.toString());
+            resource = new InputStreamResource(new LockedFileInputStreamFix(filePath.toString()));
         } catch (Exception e) {
 
             //当文件不存在时返回404，并进行标准输出

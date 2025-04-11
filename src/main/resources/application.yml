@@ -1,14 +1,16 @@
 
 server:
-  port: 9997
+  port: 8080
 
 
+
+#Http:
+#  download_path:  "/app/download"
+#  server_address: "http://8.219.243.185:9997"
 
 Http:
-  download_path:  "/app/download"
-  server_address: "http://8.219.243.185:9997"
-
-
+  download_path:  "D://RobotRelease/Mod装载版本测试/server"
+  server_address: "http://localhost:8080"
 
 spring:
   datasource:
@@ -21,3 +23,7 @@ spring:
     multipart:
       max-file-size: 100MB
       max-request-size: 100MB
+#解释器路径
+interpreter:
+  Windows: ""
+  Linux: ""

@@ -1,15 +1,21 @@
 package tsubaki.util;
 
 
+import org.springframework.boot.system.ApplicationHome;
 import org.springframework.stereotype.Service;
+import tsubaki.Loader;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 @Service
 public class FileUtil {
+
+
+    public static ReentrantReadWriteLock lock=new ReentrantReadWriteLock();
 
     public static boolean isFileExists(String directoryPath, String fileName) {
         // 创建文件夹的File对象
@@ -36,6 +42,7 @@ public class FileUtil {
         outputStream.close();
     }
     public static Boolean delete(String filePath) {
+
         File file = new File(filePath);
         System.out.println("文件目录"+filePath);
         if (file.exists()) {
@@ -74,5 +81,10 @@ public class FileUtil {
         } else {
             throw new IOException("文件创建失败: " + filePath);
         }
+    }
+    public static String getJarFilePath() {
+        ApplicationHome home = new ApplicationHome(Loader.class);
+        File jarFile = home.getSource();
+        return jarFile.getParentFile().toString();
     }
 }
