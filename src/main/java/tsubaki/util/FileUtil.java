@@ -10,6 +10,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 @Service
 public class FileUtil {
@@ -86,5 +89,30 @@ public class FileUtil {
         ApplicationHome home = new ApplicationHome(Loader.class);
         File jarFile = home.getSource();
         return jarFile.getParentFile().toString();
+    }
+
+
+
+
+    public static boolean createDirectoryIfNotExists(String dirPath) {
+        try {
+            Path path = Paths.get(dirPath);
+            Files.createDirectories(path);
+            return true;
+        } catch (Exception e) {
+            return false; // 所有异常（如路径非法、权限不足等）均静默返回失败
+        }
+    }
+
+    public static boolean createDirJarPath(String dirpath){
+        String path=getJarFilePath()+"/"+dirpath;
+        return createDirectoryIfNotExists(path);
+    }
+
+
+    //获取适合当前操作系统格式的目录格式
+    public static String getUsefulPath(String path){
+        String path_abs=Paths.get(path).normalize().toAbsolutePath().toString();
+        return path_abs;
     }
 }

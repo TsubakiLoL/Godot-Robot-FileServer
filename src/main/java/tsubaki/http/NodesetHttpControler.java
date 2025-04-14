@@ -12,12 +12,8 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 import tsubaki.database.entity.Author;
 import tsubaki.database.entity.NodeSet;
-import tsubaki.database.entity.Plugin;
-import tsubaki.database.entity.Version;
 import tsubaki.database.mapper.AuthorMapper;
 import tsubaki.database.mapper.NodeSetMapper;
-import tsubaki.database.mapper.PluginMapper;
-import tsubaki.database.mapper.VersionMapper;
 import tsubaki.database.mybatis.GetSqlsession;
 import tsubaki.file.LockedFileOutputStreamFix;
 import tsubaki.util.FileUtil;
@@ -35,9 +31,12 @@ import java.util.UUID;
 public class NodesetHttpControler {
 
 
-    @Value("${Http.download_path:D:\\}")
+    //@Value("${Http.download_path:D:\\}")
     private String path;
 
+    public NodesetHttpControler(){
+        path= FileUtil.getJarFilePath()+"/download/";
+    }
 
     @Value("${Http.server_address:http://localhost:8080}")
     private String server_address;

@@ -36,12 +36,16 @@ import java.util.UUID;
 public class PluginHttpControler {
 
 
-    @Value("${Http.download_path:D:\\}")
+    //@Value("${Http.download_path:D:\\}")
     private String path;
 
 
     @Value("${Http.server_address:http://localhost:8080}")
     private String server_address;
+
+    public PluginHttpControler(){
+        path=FileUtil.getJarFilePath()+"/download/";
+    }
     //创建新的插件
     @PostMapping("/createPlugin")
     public ResponseEntity<?> handleCreatePlugin(MultipartHttpServletRequest request) {

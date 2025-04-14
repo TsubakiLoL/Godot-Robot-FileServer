@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 import tsubaki.file.LockedFileInputStreamFix;
+import tsubaki.util.FileUtil;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -24,9 +25,12 @@ import java.util.Map;
 public class FileHttpControler {
 
 
-    @Value("${Http.download_path:D:\\}")
+    //@Value("${Http.download_path:D:\\}")
     private String path;
 
+    public FileHttpControler(){
+        path= FileUtil.getJarFilePath()+"/download/";
+    }
 
     // 从服务器文件系统下载文件
     @GetMapping("/download/{path}")
@@ -52,7 +56,6 @@ public class FileHttpControler {
             return ResponseEntity.status(404).build();
 
         }
-
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getName() + "\"")
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)

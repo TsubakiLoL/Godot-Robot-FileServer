@@ -1,4 +1,5 @@
 package tsubaki.interpreter;
+
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
@@ -9,52 +10,50 @@ public class ExternalProcess {
     private final BlockingQueue<String> outputBuffer;
     private final Thread outputGobbler;
     private final Thread errorGobbler;
+    private final Thread monitorThread;
+    private final List<ProcessExitListener> exitListeners = new ArrayList<>();
     private static final int MAX_BUFFER_SIZE = 100;
 
-    /**
-     * 创建并启动外部进程
-     * @param executablePath 可执行文件路径
-     * @param arguments 参数字典（参数名 -> 参数值）
-     */
+    // 进程终止监听接口
+    public interface ProcessExitListener {
+        void onProcessExit();
+    }
+
     public ExternalProcess(String executablePath, Map<String, String> arguments) throws IOException {
-        // 构建命令行参数列表
-        List<String> command = new ArrayList<>();
-        command.add(executablePath);
-        command.add("--");  // 添加必要的前导--
-
-        // 转换字典参数为 --key=value 格式
-        for (Map.Entry<String, String> entry : arguments.entrySet()) {
-            command.add(String.format("--%s=%s", entry.getKey(), entry.getValue()));
-        }
-
+        List<String> command = buildCommand(executablePath, arguments);
         ProcessBuilder pb = new ProcessBuilder(command);
         this.process = pb.start();
 
-        // 初始化输入输出流
         this.inputWriter = new PrintWriter(process.getOutputStream());
         this.outputBuffer = new LinkedBlockingQueue<>(MAX_BUFFER_SIZE);
 
-        // 启动输出处理线程
+        // 启动流处理线程
         this.outputGobbler = new Thread(this::handleOutputStream);
         this.errorGobbler = new Thread(this::handleErrorStream);
         outputGobbler.start();
         errorGobbler.start();
+
+        // 启动监控线程
+        this.monitorThread = new Thread(this::monitorProcess);
+        monitorThread.setDaemon(true);
+        monitorThread.start();
     }
 
-    /**
-     * 处理标准输出流
-     */
+    private List<String> buildCommand(String path, Map<String, String> args) {
+        List<String> command = new ArrayList<>();
+        command.add(path);
+        command.add("--");
+        args.forEach((k, v) -> command.add(String.format("--%s=%s", k, v)));
+        return command;
+    }
+
     private void handleOutputStream() {
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(process.getInputStream()))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 synchronized (outputBuffer) {
-                    // 维护环形缓冲区
-                    if (outputBuffer.size() >= MAX_BUFFER_SIZE) {
-                        outputBuffer.poll();
-                    }
-                    outputBuffer.offer(line);
+                    manageBuffer(line);
                 }
             }
         } catch (IOException e) {
@@ -62,9 +61,11 @@ public class ExternalProcess {
         }
     }
 
-    /**
-     * 处理错误输出流
-     */
+    private void manageBuffer(String line) {
+        if (outputBuffer.size() >= MAX_BUFFER_SIZE) outputBuffer.poll();
+        outputBuffer.offer(line);
+    }
+
     private void handleErrorStream() {
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(process.getErrorStream()))) {
@@ -76,6 +77,26 @@ public class ExternalProcess {
             if (!process.isAlive()) return;
         }
     }
+
+    private void monitorProcess() {
+        try {
+            process.waitFor();
+            notifyExitListeners();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    private void notifyExitListeners() {
+        for (ProcessExitListener listener : exitListeners) {
+            listener.onProcessExit();
+        }
+    }
+
+    public void addExitListener(ProcessExitListener listener) {
+        exitListeners.add(listener);
+    }
+
 
     /**
      * 停止进程
@@ -94,8 +115,14 @@ public class ExternalProcess {
      */
     public void input(String str) {
         if (process.isAlive()) {
+            // 发送到进程输入流
             inputWriter.println(str);
             inputWriter.flush();
+
+            // 将输入内容同步记录到输出缓冲区
+            synchronized (outputBuffer) {
+                manageBuffer("[INPUT] " + str); // 添加输入标记
+            }
         }
     }
 

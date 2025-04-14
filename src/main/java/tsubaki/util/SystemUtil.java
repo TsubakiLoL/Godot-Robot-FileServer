@@ -12,7 +12,7 @@ public class SystemUtil {
     }
 
     // 返回系统类型
-    public String judgeSystem() {
+    public static String judgeSystem() {
         if (isLinux()) {
             return "linux";
         } else if (isWindows()) {
@@ -21,5 +21,6 @@ public class SystemUtil {
             return "unknown";
         }
     }
+
 
 }

@@ -1,26 +1,15 @@
 package tsubaki.http;
 
 
-import org.apache.ibatis.session.SqlSession;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.InputStreamResource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
-import tsubaki.database.entity.Author;
-import tsubaki.database.mapper.AuthorMapper;
-import tsubaki.database.mapper.NodeSetMapper;
-import tsubaki.database.mybatis.GetSqlsession;
-import tsubaki.file.LockedFileInputStreamFix;
 import tsubaki.file.LockedFileOutputStreamFix;
 import tsubaki.util.FileUtil;
-import tsubaki.util.MD5Util;
 
 import java.io.*;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -31,10 +20,13 @@ import java.util.UUID;
 @RequestMapping("/image")
 public class ImageHttpControler {
 
-    @Value("${Http.download_path:D:\\}")
+    //@Value("${Http.download_path:D:\\}")
     private String path;
 
 
+    public ImageHttpControler(){
+        path= FileUtil.getJarFilePath()+"/download/";
+    }
     @Value("${Http.server_address:http://localhost:8080}")
     private String server_address;
     //上传图片
